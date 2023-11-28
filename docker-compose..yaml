@@ -1,0 +1,14 @@
+version: '3.7'
+volumnes: 
+  volMysql:
+  services:
+  dbMysql:
+  images: mysql:latest
+  container_name: 'mysqlcontainer'
+  environment:
+  - MYSQL_ROOT_PASSWORD=basesecreta
+  - MYSQL_DATABASE=unatiendita
+  ports:
+  - 3306:3306
+  volumes:
+  - volMysql:/var/lib/mysql

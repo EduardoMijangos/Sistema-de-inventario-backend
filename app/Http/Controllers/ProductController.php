@@ -23,6 +23,22 @@ class ProductController extends Controller
         return response()->json($products, 200);
     }
 
+    public function getProductById($id)
+{
+    $product = Product::find($id);
+
+    if (!$product) {
+        return response()->json(['message' => 'Producto no encontrado'], 404);
+    }
+
+    // Puedes ajustar la respuesta según tus necesidades, aquí se incluye el nombre del producto.
+    return response()->json([
+        'id' => $product->id,
+        'name' => $product->name,
+        // Añade otros campos según sea necesario
+    ], 200);
+}
+
     public function newProduct(Request $request)
     {
 
@@ -55,5 +71,47 @@ class ProductController extends Controller
         return response()->json(['producto' => $producto], 201);
     }
 
+    public function  deleteProductById($id){
+        $product = product::find($id);
+        if(is_null($product)){
+            return response()->json(['msn' => 'Product not found'], 404);
+        }
+        $product->delete();
+        return response()->json(['msn' => 'Producto Eliminado', 200]);
+    }
 
+    public function updateProductById(Request $request, $id)
+    {
+        $product = Product::find($id);
+        if (!$product) {
+            return response()->json(['message' => 'Producto no encontrado'], 404);
+        }
+        $validator = Validator::make($request->all(), [
+            'name' => 'string|max:50',
+            'price' => 'numeric',
+            'price_sale' => 'numeric',
+            'stock' => 'numeric|nullable',
+            'expired' => 'nullable',
+            'category_id' => 'numeric|nullable',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+        if ($request->hasFile('image')) {
+            // Si se envía una nueva imagen, se elimina la imagen anterior y se almacena la nueva.
+            if ($product->image) {
+                Storage::delete($product->image);
+            }
+            $rutaArchivoImg = $request->file('image')->store('public/imgproductos');
+            $product->image = $rutaArchivoImg;
+        }
+        $fieldsToUpdate = ['name', 'category_id', 'price', 'price_sale', 'stock', 'expired'];
+        foreach ($fieldsToUpdate as $field) {
+            if ($request->has($field)) {
+                $product->$field = $request->input($field);
+            }
+        }
+        $product->save();
+        return response()->json(['message' => 'Producto actualizado con éxito'], 200);
+    }
 }
